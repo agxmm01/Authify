@@ -29,7 +29,7 @@ public class AppUserDetailsService implements UserDetailsService {
                 .username(existingUser.getEmail())
                 .password(existingUser.getPassword())
                 .authorities(new ArrayList<>())
-                .disabled(!existingUser.getIsAccountVerified()) // false = enabled
+                // .disabled(!existingUser.getIsAccountVerified()) // false = enabled
                 .build();
 
     }

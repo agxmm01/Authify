@@ -6,6 +6,7 @@ import in.agampal.Authify.io.ProfileResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,8 +22,9 @@ public class ProfileController {
         // TODO : send email
         return response;
     }
-    @GetMapping("/test")
-    public String test(){
-        return "Auth is working";
+
+    @GetMapping("/profile")
+    public ProfileResponse getProfile(@CurrentSecurityContext(expression = "authentication?.name")String email){
+       return profileService.getProfile(email);
     }
 }
