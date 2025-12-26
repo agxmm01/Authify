@@ -104,11 +104,33 @@ public class AuthController {
     }
 
     @PostMapping("/send-otp")
-    public void sendVerifyOtp(@CurrentSecurityContext(expression = "authentication?.name")String email){
-        try{
-            profileService.sendOtp(email);
+public void sendVerifyOtp(@RequestParam String email){
+    try{
+        profileService.sendOtp(email);
+    } catch (Exception e) {
+        throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
+    @PostMapping("/verify-otp")
+    public void verifyEmail(@RequestBody Map<String, Object> request) {
+
+        if (request.get("email") == null || request.get("otp") == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST, "Missing email or OTP"
+            );
+        }
+
+        try {
+            String email = request.get("email").toString();
+            String otp   = request.get("otp").toString();
+
+            profileService.verifyOtp(email, otp);
+
         } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()
+            );
         }
     }
 }
