@@ -36,9 +36,9 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         // 1. Check the authorization header
         final String authorizationHeader = request.getHeader("Authorization");
-        if (authorizationHeader != null && authorizationHeader.toLowerCase().startsWith("Bearer ")) {
+        if (authorizationHeader != null && authorizationHeader.toLowerCase().startsWith("bearer ")) {
             jwt = authorizationHeader.substring(7);
-        }
+}
 
         //2. If it is not found in the header
         if(jwt == null) {
@@ -56,14 +56,19 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         //3. Validate the token and set the security Context
 
         if(jwt != null) {
-            email = jwtUtil.extractEmail(jwt);
-            if(email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-               UserDetails userDetails=  appUserDetailsService.loadUserByUsername(email);
-               if(jwtUtil.validateToken(jwt,userDetails)) {
-                   UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
-                   authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                   SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-               }
+            try {
+                email = jwtUtil.extractEmail(jwt);
+                if(email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                   UserDetails userDetails=  appUserDetailsService.loadUserByUsername(email);
+                   if(jwtUtil.validateToken(jwt,userDetails)) {
+                       UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(userDetails,null,userDetails.getAuthorities());
+                       authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                       SecurityContextHolder.getContext().setAuthentication(authenticationToken);
+                   }
+                }
+            } catch (Exception e) {
+                // JWT is invalid/expired - don't set authentication, let Spring Security handle it
+                // Don't throw exception - just continue without authentication
             }
         }
         filterChain.doFilter(request, response);

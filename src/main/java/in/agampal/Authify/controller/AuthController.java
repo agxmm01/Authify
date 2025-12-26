@@ -2,18 +2,21 @@ package in.agampal.Authify.controller;
 
 import in.agampal.Authify.Repository.UserRepository;
 import in.agampal.Authify.Service.AppUserDetailsService;
+import in.agampal.Authify.Service.ProfileService;
 import in.agampal.Authify.io.AuthRequest;
+import in.agampal.Authify.io.ResetPasswordRequest;
 import in.agampal.Authify.util.JwtUtil;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.annotation.CurrentSecurityContext;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.util.HashMap;
@@ -24,9 +27,15 @@ import java.util.Map;
 public class AuthController {
 
     private final UserRepository userRepository;
+
     private final JwtUtil jwtUtil;
+
     private final AuthenticationManager authenticationManager;
+
     private final AppUserDetailsService userDetailsService;
+
+    private final ProfileService profileService;
+
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest authRequest) {
         try {
@@ -64,12 +73,42 @@ public class AuthController {
             System.out.println("User exists: " + userRepository.findByEmail(authRequest.getEmail()));
             System.out.println("Password raw: " + authRequest.getPassword());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
-
-
         }
     }
 
     private void authenticate(String email, String password) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email,password));
+    }
+
+    @GetMapping("/is-authenticated")
+    public ResponseEntity<Boolean> isAuthenticated(@CurrentSecurityContext(expression = "authentication?.name" )String email){
+        return ResponseEntity.ok(email != null);
+    }
+
+    @PostMapping("/send-reset-otp")
+    public void sendResetOtpEmail(@RequestParam String email) {
+        try{
+            profileService.sendResetOtp(email);
+        }catch (Exception ex){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public void resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        try{
+            profileService.resetPassword(request.getEmail(),request.getOtp(),request.getNewPassword());
+        }catch (Exception ex){
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
+        }
+    }
+
+    @PostMapping("/send-otp")
+    public void sendVerifyOtp(@CurrentSecurityContext(expression = "authentication?.name")String email){
+        try{
+            profileService.sendOtp(email);
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
     }
 }

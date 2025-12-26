@@ -15,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -22,6 +23,8 @@ public class ProfileServiceImpl implements ProfileService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
+
     @Override
     public ProfileResponse createProfile(ProfileRequest request) {
         UserEntity newProfile = convertToUserEntity(request);
@@ -51,6 +54,85 @@ public class ProfileServiceImpl implements ProfileService {
                 .orElseThrow(()-> new UsernameNotFoundException("User not found " + email));
 
         return convertToProfileResponse(existingUser);
+    }
+
+    @Override
+    public void sendResetOtp(String email) {
+        UserEntity existingEntity = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found " + email));
+
+        // Generate 6 digit Otp
+        String otp = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+
+        // calculate expiry time (current time + 15 mins in milliseconds)
+        long expiryTime = System.currentTimeMillis() + (15 * 60*1000);
+
+        // Update the profile/user
+        existingEntity.setResetOtp(otp);
+        existingEntity.setResetOtpExpireAt(expiryTime);
+
+        // save into the database
+        userRepository.save(existingEntity);
+
+        try {
+            emailService.sendResetOtpEmail(existingEntity.getEmail(), existingEntity.getResetOtp());
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to send email");
+        }
+    }
+
+    @Override
+    public void resetPassword(String email, String otp, String newPassword) {
+        UserEntity exisitingEntity = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found " + email));
+        if(exisitingEntity.getResetOtp()==null || !exisitingEntity.getResetOtp().equals(otp)){
+            throw new RuntimeException("Invalid OTP");
+        }
+
+        if (exisitingEntity.getResetOtpExpireAt() < System.currentTimeMillis()) {
+            throw new RuntimeException("OTP expired");
+        }
+
+        exisitingEntity.setPassword(passwordEncoder.encode(newPassword));
+        exisitingEntity.setResetOtp(null);
+        exisitingEntity.setResetOtpExpireAt(0L);
+
+        userRepository.save(exisitingEntity);
+
+    }
+
+    @Override
+    public void sendOtp(String email) {
+        UserEntity existingUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found " + email));
+        if (existingUser.getIsAccountVerified() != null && existingUser.getIsAccountVerified()) {
+            return;
+        }
+
+        // Generate 6 digit Otp
+        String otp = String.valueOf(ThreadLocalRandom.current().nextInt(100000, 1000000));
+
+        // calculate expiry time (current time + 24 hours in milliseconds)
+        long expiryTime = System.currentTimeMillis() + (24* 60 * 60 *1000);
+
+        //Update the user/profile
+        existingUser.setVerifyOtp(otp);
+        existingUser.setVerifyOtpExpireAt(expiryTime);
+
+        //Save the configuration to database
+        userRepository.save(existingUser);
+    }
+
+    @Override
+    public void verifyOtp(String email, String otp) {
+
+    }
+
+    @Override
+    public String getLoggedInUserId(String email) {
+       UserEntity existingUser = userRepository.findByEmail(email)
+               .orElseThrow(() -> new UsernameNotFoundException("User not found " + email));
+       return existingUser.getUserId();
     }
 
     private ProfileResponse convertToProfileResponse(UserEntity newProfile) {
