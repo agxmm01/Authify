@@ -21,4 +21,8 @@ public class ProfileController {
         // TODO : send email
         return response;
     }
+    @GetMapping("/test")
+    public String test(){
+        return "Auth is working";
+    }
 }

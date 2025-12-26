@@ -3,7 +3,7 @@ package in.agampal.Authify.controller;
 import in.agampal.Authify.Repository.UserRepository;
 import in.agampal.Authify.Service.AppUserDetailsService;
 import in.agampal.Authify.io.AuthRequest;
-import in.agampal.Authify.util.JWTUtil;
+import in.agampal.Authify.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -24,7 +24,7 @@ import java.util.Map;
 public class AuthController {
 
     private final UserRepository userRepository;
-    private final JWTUtil jwtUtil;
+    private final JwtUtil jwtUtil;
     private final AuthenticationManager authenticationManager;
     private final AppUserDetailsService userDetailsService;
     @PostMapping("/login")
