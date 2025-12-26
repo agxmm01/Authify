@@ -31,8 +31,5 @@ public class AppUserDetailsService implements UserDetailsService {
                 .authorities(new ArrayList<>())
                 // .disabled(!existingUser.getIsAccountVerified()) // false = enabled
                 .build();
-
     }
-
-
 }
