@@ -23,9 +23,12 @@
 
     <dependencies>
         <!-- Spring Boot JPA -->
+        <!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-data-jpa -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <version>4.1.0-M1</version>
+            <scope>compile</scope>
         </dependency>
 
         <!-- Spring Boot Web MVC -->
