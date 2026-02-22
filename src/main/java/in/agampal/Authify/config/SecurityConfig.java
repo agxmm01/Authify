@@ -61,7 +61,7 @@ public class SecurityConfig {
 
     private CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173","http://localhost:8080"));
+        config.setAllowedOrigins(List.of("http://localhost:5173","https://authify-kqt9.onrender.com"));
 //        config.setAllowedOrigins(List.of());
         config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS","PATCH"));
         config.setAllowedHeaders(List.of("Authorization","Content-Type"));
