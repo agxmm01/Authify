@@ -1,4 +1,4 @@
-FROM openjdk@sha256:9c484cfbe3cda24c78838da9ad333be25c1d3bcf4c9788b4f5cf34911c07c1cf AS build
+FROM amazoncorretto:25.0.2 AS build
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY mvnw .
 RUN chmod +x mvnw
 RUN ./mvnw install -DskipTests
 
-FROM openjdk@sha256:9c484cfbe3cda24c78838da9ad333be25c1d3bcf4c9788b4f5cf34911c07c1cf
+FROM amazoncorretto:25.0.2
 
 WORKDIR /app
 
